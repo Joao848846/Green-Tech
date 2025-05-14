@@ -3,416 +3,406 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gerenciamento de Agendamentos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
-    />
-    <script
-      type="text/javascript"
-      src="https://cdn.jsdelivr.net/npm/toastify-js"
-    ></script>
+    <title>Dashboard de Agendamentos Inteligentes</title>
     <style>
-      /* Estilos personalizados para efeitos e cores */
-      #toggleUpload {
-        transition:
-          background-color 0.3s ease,
-          transform 0.2s ease;
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 20px;
+        background-color: #181818; /* Tema escuro e elegante */
+        color: #f0f0f0;
       }
 
-      #toggleUpload:hover {
-        background-color: #6b7280; /* Cinza um pouco mais escuro */
-        transform: scale(1.05);
-        cursor: pointer;
+      .dashboard-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-gap: 20px;
       }
 
-      #uploadSection {
-        opacity: 0;
-        transform: translateY(-10px);
-        transition:
-          opacity 0.3s ease-in-out,
-          transform 0.3s ease-in-out;
+      .widget {
+        background-color: #282828;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease-in-out;
       }
 
-      #uploadSection.show {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      #syncButton {
-        transition:
-          background-color 0.3s ease,
-          transform 0.2s ease;
-      }
-
-      #syncButton:hover {
-        background-color: #2563eb; /* Azul mais escuro */
+      .widget:hover {
         transform: scale(1.02);
+      }
+
+      .widget-title {
+        font-size: 1.4em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #eee;
+        border-bottom: 2px solid #444;
+        padding-bottom: 5px;
+      }
+
+      .metric-value {
+        font-size: 3em;
+        font-weight: bold;
+        color: #00bfff; /* Azul vibrante */
+        animation: pulse 1.5s infinite alternate;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.8;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .metric-label {
+        color: #999;
+        margin-top: 8px;
+        font-size: 0.9em;
+      }
+
+      /* Widget de Status de Pagamentos (Donut Chart Placeholder) */
+      #status-pagamentos-chart {
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #777;
+        font-style: italic;
+        border: 2px dashed #555;
+        border-radius: 50%;
+        margin: 10px auto;
+        width: 150px;
+      }
+
+      /* Widget de Tipos de Contrato (Bar Chart Placeholder) */
+      #tipos-contrato-chart {
+        height: 120px;
+        border-left: 2px solid #555;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        margin-top: 10px;
+      }
+      .bar {
+        background-color: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px 5px 0 0;
+        font-size: 0.8em;
+      }
+
+      /* Widget de Agendamentos Recentes */
+      .recent-agendamentos ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .recent-agendamentos li {
+        padding: 10px 0;
+        border-bottom: 1px solid #444;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        animation: slideIn 0.5s ease-out forwards;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      @keyframes slideIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .recent-agendamentos li:last-child {
+        border-bottom: none;
+      }
+
+      .status-badge {
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 0.8em;
+        font-weight: bold;
+      }
+      .status-pago {
+        background-color: #4caf50;
+        color: #222;
+      }
+      .status-pendente {
+        background-color: #ffc107;
+        color: #333;
+      }
+      .status-atrasado {
+        background-color: #f44336;
+        color: #eee;
+      }
+
+      /* Paginação */
+      #pagination-controls {
+        margin-top: 15px;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      #pagination-controls button {
+        padding: 8px 16px;
+        border: 1px solid #666;
+        border-radius: 5px;
+        background-color: #333;
+        color: #eee;
         cursor: pointer;
+        transition: background-color 0.3s ease;
       }
 
-      table {
-        border-collapse: collapse;
-        width: 100%;
+      #pagination-controls button.active {
+        background-color: #00bfff;
+        border-color: #00bfff;
       }
 
-      thead th {
-        background-color: #f3f4f6; /* Cinza claro para o cabeçalho */
-        color: #4b5563; /* Cinza um pouco mais escuro para o texto do cabeçalho */
-        padding: 12px 16px;
-        text-align: left;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      tbody tr:nth-child(even) {
-        background-color: #f9fafb; /* Cinza bem claro para linhas pares */
-      }
-
-      tbody tr:hover {
-        background-color: #e5e7eb; /* Cinza ainda mais claro ao passar o mouse */
-      }
-
-      tbody td {
-        padding: 10px 16px;
-        border-bottom: 1px solid #e0e0e0; /* Linha divisória sutil */
-        color: #374151; /* Cinza escuro para o texto da célula */
+      #pagination-controls button:hover:not(.active) {
+        background-color: #555;
       }
     </style>
   </head>
-  <body class="bg-gray-100 py-10">
-    <div class="mx-auto bg-white rounded-md shadow-xl overflow-hidden w-full">
-      <header class="bg-blue-600 text-white py-5 px-8">
-        <h1 class="text-2xl font-semibold text-center tracking-wide">
-          Gerenciamento de Agendamentos
-        </h1>
-      </header>
-      <section
-        class="p-8 border-b border-gray-200 flex items-center justify-end"
-      >
-        <button
-          id="toggleUpload"
-          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 + 5v10m0 -10h10m-10 0H2"
-            />
-          </svg>
-          <span class="sr-only">Mostrar Upload</span>
-        </button>
-      </section>
-      <section id="uploadSection" class="p-8 border-b border-gray-200 hidden">
-        <form id="uploadForm" enctype="multipart/form-data" class="space-y-4">
-          <div>
-            <label
-              for="csvFile"
-              class="block text-gray-700 text-sm font-bold mb-2"
-              >Arquivo CSV:</label
-            >
-            <input
-              type="file"
-              id="csvFile"
-              name="file"
-              accept=".csv"
-              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-          <button
-            type="submit"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
-          >
-            Enviar Arquivo
-          </button>
-          <div id="uploadStatus" class="text-green-600 font-semibold"></div>
-        </form>
-      </section>
-      <div class="mt-6 text-center">
-        <button
-          id="syncButton"
-          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-5 h-5 inline-block mr-2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M16.023 9.343v-.909c0-.707-.186-1.414-.523-2.023l-.304-.304c-.61-.337-1.318-.527-2.023-.527H9.843c-.707 0-1.414.19-2.023-.527l-.304-.304c-.337.608-.527 1.315-.527 2.023v.909m1.15-3.464A9 9 0 1 0 10.309 3.948m1.422 13.048a9 9 0 0 0 7.584-6.425"
-            />
-          </svg>
-          Sincronizar Agendamentos
-        </button>
+  <body>
+    <h1>Dashboard de Agendamentos Inteligentes</h1>
+    <div class="dashboard-container">
+      <div class="widget">
+        <div class="widget-title">Total de Agendamentos</div>
+        <div class="metric-value" id="total-agendamentos">Carregando...</div>
+        <div class="metric-label">Número total de agendamentos ativos</div>
       </div>
-      <section id="dataDisplay" class="p-8 mt-6">
-        <h2
-          class="text-xl font-semibold text-gray-700 mb-5 text-center tracking-wide"
-        >
-          Dados Processados
-        </h2>
-        <div class="overflow-x-auto rounded-md shadow-sm">
-          <table class="min-w-full leading-normal">
-            <thead>
-              <tr>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  ID
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Nome
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Telefone
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Documento
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Tipo Contrato
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Data Contrato
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Status Pagamento
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Valor Mensalidade
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Lembrete Enviado
-                </th>
-                <th
-                  class="px-6 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Data Último Lembrete
-                </th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-          <p
-            id="noDataMessage"
-            class="text-gray-500 italic mt-4 text-center hidden"
-          >
-            Nenhum dado processado encontrado.
-          </p>
+
+      <div class="widget">
+        <div class="widget-title">Status de Pagamentos</div>
+        <div id="status-pagamentos-chart">Gráfico de Pagamentos</div>
+        <div class="metric-label" style="text-align: center">
+          Distribuição dos status de pagamento
         </div>
-      </section>
+        <div
+          style="display: flex; justify-content: space-around; margin-top: 10px"
+        >
+          <span id="pagos-count" class="status-pago status-badge"
+            >Pagos: Carregando...</span
+          >
+          <span id="pendentes-count" class="status-pendente status-badge"
+            >Pendentes: Carregando...</span
+          >
+          <span id="atrasados-count" class="status-atrasado status-badge"
+            >Atrasados: Carregando...</span
+          >
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-title">Tipos de Contrato</div>
+        <div id="tipos-contrato-chart">
+          <div class="bar" style="height: 30%" id="mensal-count">Mensal</div>
+          <div class="bar" style="height: 60%" id="semestral-count">
+            Semestral
+          </div>
+          <div class="bar" style="height: 90%" id="anual-count">Anual</div>
+        </div>
+        <div class="metric-label" style="text-align: center">
+          Distribuição por tipo de contrato
+        </div>
+      </div>
+
+      <div class="widget recent-agendamentos">
+        <div class="widget-title">Agendamentos Recentes</div>
+        <ul id="lista-recentes"></ul>
+        <div id="pagination-controls"></div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-title">Lembretes Enviados</div>
+        <div class="metric-value" id="lembretes-enviados-count">
+          Carregando...
+        </div>
+        <div class="metric-label">Total de lembretes enviados</div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-title">Lembretes Não Enviados</div>
+        <div class="metric-value" id="lembretes-nao-enviados-count">
+          Carregando...
+        </div>
+        <div class="metric-label">Total de lembretes não enviados</div>
+      </div>
     </div>
 
     <script>
-      const form = document.getElementById("uploadForm");
-      const fileInput = document.getElementById("csvFile");
-      const statusDiv = document.getElementById("uploadStatus");
-      const tableBody = document.getElementById("tableBody");
-      const dataDisplayDiv = document.getElementById("dataDisplay");
-      const noDataMessage = document.getElementById("noDataMessage");
-      const syncButton = document.getElementById("syncButton");
-      const toggleUploadButton = document.getElementById("toggleUpload");
-      const uploadSection = document.getElementById("uploadSection");
+      // Função para exibir os agendamentos recentes com paginação
+      function exibirAgendamentosRecentes(
+        agendamentos,
+        pagina = 1,
+        itensPorPagina = 5
+      ) {
+        const listaRecentes = document.getElementById("lista-recentes");
+        listaRecentes.innerHTML = "";
 
-      // 1. Esconder/Mostrar Upload com Ícone no Canto Direito
-      toggleUploadButton.addEventListener("click", () => {
-        uploadSection.classList.toggle("hidden");
-        uploadSection.classList.add("show"); // Adiciona a classe para a animação
-      });
+        const startIndex = (pagina - 1) * itensPorPagina;
+        const endIndex = startIndex + itensPorPagina;
+        const agendamentosPagina = agendamentos.slice(startIndex, endIndex);
 
-      async function fetchAgendamentos() {
-        try {
-          const response = await fetch(
-            "http://localhost:3000/api/v1/csv/agendamentos"
-          );
-          if (!response.ok) {
-            throw new Error(`Erro ao buscar agendamentos: ${response.status}`);
-          }
-          const data = await response.json();
-          displayData(data);
-        } catch (error) {
-          console.error("Erro ao buscar agendamentos:", error);
-          Toastify({
-            text: "Erro ao atualizar a lista de agendamentos.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            style: {
-              background: "#dc2626",
-              color: "white",
-            },
-          }).showToast();
-        }
-      }
+        agendamentosPagina.forEach((agendamento) => {
+          const listItem = document.createElement("li");
+          const statusClass = `status-${agendamento.statusPagamento.toLowerCase()}`;
+          const dataUltimoLembrete = agendamento.dataUltimoLembreteEnviado
+            ? new Date(
+                agendamento.dataUltimoLembreteEnviado
+              ).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+            : "Nunca Enviado";
 
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
+          listItem.innerHTML = `
+                    <span>${agendamento.nome}</span>
+                    <div>
+                        <span class="status-badge ${statusClass}">${agendamento.statusPagamento}</span>
+                        <small style="color: #999; margin-left: 10px;">Último Lembrete: ${dataUltimoLembrete}</small>
+                    </div>
+                `;
+          listaRecentes.appendChild(listItem);
+        });
 
-        if (!fileInput.files?.[0]) {
-          Toastify({
-            text: "Por favor, selecione um arquivo CSV.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            style: {
-              background: "#dc2626",
-              color: "white",
-            },
-          }).showToast();
-          return;
-        }
+        // Lógica de paginação
+        const totalPaginas = Math.ceil(agendamentos.length / itensPorPagina);
+        const paginationControls = document.getElementById(
+          "pagination-controls"
+        );
+        paginationControls.innerHTML = "";
 
-        const formData = new FormData();
-        formData.append("file", fileInput.files?.[0]);
-
-        try {
-          const response = await fetch(
-            "http://localhost:3000/api/v1/csv/upload",
-            {
-              method: "POST",
-              body: formData,
+        if (totalPaginas > 1) {
+          for (let i = 1; i <= totalPaginas; i++) {
+            const button = document.createElement("button");
+            button.textContent = i;
+            if (i === pagina) {
+              button.classList.add("active");
             }
-          );
-
-          const result = await response.json();
-
-          if (response.ok) {
-            Toastify({
-              text: "Arquivo enviado e processado com sucesso!",
-              duration: 3000,
-              close: true,
-              gravity: "top",
-              position: "right",
-              style: {
-                background: "#16a34a",
-                color: "white",
-              },
-            }).showToast();
-            statusDiv.textContent = "";
-            uploadSection.classList.add("hidden");
-            uploadSection.classList.remove("show"); // Remove a classe para esconder suavemente na próxima vez
-            await fetchAgendamentos();
-          } else {
-            Toastify({
-              text: `Erro no envio do arquivo: ${response.status} - ${JSON.stringify(result)}`,
-              duration: 5000,
-              close: true,
-              gravity: "top",
-              position: "right",
-              style: {
-                background: "#dc2626",
-                color: "white",
-              },
-            }).showToast();
-          }
-        } catch (error) {
-          Toastify({
-            text: `Ocorreu um erro ao enviar o arquivo: ${error.message}`,
-            duration: 5000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            style: {
-              background: "#dc2626",
-              color: "white",
-            },
-          }).showToast();
-        }
-      });
-
-      syncButton.addEventListener("click", fetchAgendamentos);
-
-      function displayData(data) {
-        tableBody.innerHTML = "";
-        if (data && data.length > 0) {
-          dataDisplayDiv.classList.remove("hidden");
-          noDataMessage.classList.add("hidden");
-          data.forEach((item) => {
-            const row = tableBody.insertRow();
-            row.insertCell().textContent = item?.id ?? "null";
-            row.insertCell().textContent = item?.nome ?? "null";
-            row.insertCell().textContent = item?.telefone ?? "null";
-            row.insertCell().textContent = item?.documento ?? "null";
-            row.insertCell().textContent = item?.tipo_contrato ?? "null";
-            const dataContrato = item?.data_contrato;
-            row.insertCell().textContent = dataContrato
-              ? new Date(dataContrato).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  timeZone: "UTC",
-                })
-              : "null";
-            row.insertCell().textContent = item?.status_pagamento ?? "null";
-            row.insertCell().textContent = item?.valor_mensalidade ?? "null";
-            row.insertCell().textContent = item?.lembreteEnviado
-              ? "Sim"
-              : "Não";
-            const dataUltimoLembreteString = item?.dataUltimoLembreteEnviado;
-            row.insertCell().textContent = dataUltimoLembreteString
-              ? new Date(
-                  new Date(dataUltimoLembreteString).getTime() -
-                    3 * 60 * 60 * 1000
-                ).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "Pendente";
-            Array.from(row.cells).forEach((cell) => {
-              cell.classList.add(
-                "px-6",
-                "py-3",
-                "border-b",
-                "border-gray-200",
-                "text-sm",
-                "text-gray-700"
-              );
+            button.addEventListener("click", () => {
+              exibirAgendamentosRecentes(agendamentos, i);
             });
-          });
-        } else {
-          dataDisplayDiv.classList.add("hidden");
-          noDataMessage.classList.remove("hidden");
+            paginationControls.appendChild(button);
+          }
         }
       }
 
-      fetchAgendamentos();
+      // Chamadas para os endpoints
+      fetch("http://localhost:3000/api/v1/csv/agendamentos")
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("total-agendamentos").textContent =
+            data.length;
+          exibirAgendamentosRecentes(data);
+        });
+
+      fetch(
+        "http://localhost:3000/api/v1/csv/agendamentos/status_pagamento/count?status_pagamento=pago"
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const element = document.getElementById("pagos-count");
+          if (element) element.textContent = `Pagos: ${data}`;
+        });
+
+      fetch(
+        "http://localhost:3000/api/v1/csv/agendamentos/status_pagamento/count?status_pagamento=pendente"
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const element = document.getElementById("pendentes-count");
+          if (element) element.textContent = `Pendentes: ${data}`;
+        });
+
+      fetch(
+        "http://localhost:3000/api/v1/csv/agendamentos/status_pagamento/count?status_pagamento=atrasado"
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const element = document.getElementById("atrasados-count");
+          if (element) element.textContent = `Atrasados: ${data}`;
+        });
+
+      // Novos endpoints de contagem de lembretes
+      fetch(
+        "http://localhost:3000/api/v1/csv/agendamentos/lembrete/count?lembrete_enviado=true"
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const element = document.getElementById("lembretes-enviados-count");
+          if (element) element.textContent = data;
+        });
+
+      fetch(
+        "http://localhost:3000/api/v1/csv/agendamentos/lembrete/count?lembrete_enviado=false"
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const element = document.getElementById(
+            "lembretes-nao-enviados-count"
+          );
+          if (element) element.textContent = data;
+        });
+
+      // Simulação dos gráficos de barra (Tipos de Contrato - precisaríamos de um endpoint para a contagem por tipo)
+      // Os valores fixos são apenas para dar uma ideia visual
+      fetch("http://localhost:3000/api/v1/csv/agendamentos")
+        .then((response) => response.json())
+        .then((data) => {
+          const mensal = data.filter(
+            (item) => item.tipo_contrato === "mensal"
+          ).length;
+          const semestral = data.filter(
+            (item) => item.tipo_contrato === "semestral"
+          ).length;
+          const anual = data.filter(
+            (item) => item.tipo_contrato === "anual"
+          ).length;
+
+          const total = mensal + semestral + anual;
+
+          document.getElementById("mensal-count").style.height =
+            `${(mensal / total) * 80 + 20}%`;
+          document.getElementById("mensal-count").textContent =
+            `Mensal (${mensal})`;
+
+          document.getElementById("semestral-count").style.height =
+            `${(semestral / total) * 80 + 20}%`;
+          document.getElementById("semestral-count").textContent =
+            `Semestral (${semestral})`;
+
+          document.getElementById("anual-count").style.height =
+            `${(anual / total) * 80 + 20}%`;
+          document.getElementById("anual-count").textContent =
+            `Anual (${anual})`;
+        });
+
+      // Simulação do gráfico de donut (Status de Pagamentos - precisaríamos de um endpoint para a contagem por status)
+      fetch("http://localhost:3000/api/v1/csv/agendamentos")
+        .then((response) => response.json())
+        .then((data) => {
+          const pagos = data.filter(
+            (item) => item.statusPagamento === "pago"
+          ).length;
+          const pendentes = data.filter(
+            (item) => item.statusPagamento === "pendente"
+          ).length;
+          const atrasados = data.filter(
+            (item) => item.statusPagamento === "atrasado"
+          ).length;
+
+          // Aqui você integraria uma biblioteca de gráficos como Chart.js para criar o donut real
+          const chartElement = document.getElementById(
+            "status-pagamentos-chart"
+          );
+          if (chartElement) chartElement.textContent = "Gráfico de Pagamentos"; // Placeholder até a biblioteca ser integrada
+        });
     </script>
   </body>
 </html>
